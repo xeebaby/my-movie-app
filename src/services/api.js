@@ -3,6 +3,5 @@ const BASE_URL = "http://www.omdbapi.com/";
 
 export async function fetchMovies(searchTerm) {
   const res = await fetch(`${BASE_URL}?apikey=${API_KEY}&s=${searchTerm}`);
-  const data = await res.json();
-  return data;
+  return res.json();
 }
