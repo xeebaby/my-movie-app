@@ -1,52 +1,57 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { fetchMovieDetails } from "../services/movieService";
 
-const API_KEY = "20071961";
-const BASE_URL = "http://www.omdbapi.com/";
-
-export default function MovieDetails({ imdbID, onClose }) {
+function MovieDetails({ imdbID, onClose }) {
   const [movie, setMovie] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (imdbID) {
-      fetch(`${BASE_URL}?apikey=${API_KEY}&i=${imdbID}&plot=full`)
-        .then((res) => res.json())
-        .then((data) => setMovie(data));
+    async function getDetails() {
+      setLoading(true);
+      try {
+        const data = await fetchMovieDetails(imdbID);
+        setMovie(data);
+      } catch (err) {
+        console.error("Error fetching movie details:", err);
+      } finally {
+        setLoading(false);
+      }
     }
+    if (imdbID) getDetails();
   }, [imdbID]);
 
-  if (!imdbID) return null;
+  if (loading) return <p className="text-center mt-4">Loading details...</p>;
+  if (!movie) return <p className="text-center mt-4">No details available.</p>;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-      <div className="bg-white p-6 rounded-2xl shadow-lg max-w-lg w-full relative">
-        {/* Close button */}
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl max-w-2xl w-full p-6 relative">
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-600 hover:text-black"
+          className="absolute top-3 right-3 text-lg font-bold text-gray-600 hover:text-red-500"
         >
           ✖
         </button>
-
-        {movie ? (
+        <div className="flex flex-col md:flex-row gap-6">
+          <img
+            src={movie.Poster !== "N/A" ? movie.Poster : "https://via.placeholder.com/300x450"}
+            alt={movie.Title}
+            className="w-48 h-auto rounded-md shadow-md"
+          />
           <div>
-            <img
-              src={movie.Poster}
-              alt={movie.Title}
-              className="w-full h-80 object-cover rounded-lg mb-4"
-            />
             <h2 className="text-2xl font-bold mb-2">{movie.Title}</h2>
-            <p className="text-sm text-gray-500 mb-2">
+            <p className="text-sm text-gray-600 mb-2">
               {movie.Year} • {movie.Runtime} • {movie.Genre}
             </p>
-            <p className="text-gray-700 mb-4">{movie.Plot}</p>
-            <p className="text-gray-600">
-              ⭐ {movie.imdbRating} / 10 ({movie.imdbVotes} votes)
-            </p>
+            <p className="mb-4">{movie.Plot}</p>
+            <p><strong>Director:</strong> {movie.Director}</p>
+            <p><strong>Actors:</strong> {movie.Actors}</p>
+            <p><strong>IMDb Rating:</strong> {movie.imdbRating}</p>
           </div>
-        ) : (
-          <p className="text-center">Loading...</p>
-        )}
+        </div>
       </div>
     </div>
   );
 }
+
+export default MovieDetails;
